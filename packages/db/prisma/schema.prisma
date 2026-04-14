@@ -1,0 +1,189 @@
+// packages/db/prisma/schema.prisma
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String    @id @default(uuid())
+  email         String    @unique
+  password      String
+  firstName     String
+  lastName      String
+  phone         String?
+  role          Role      @default(CUSTOMER)
+  isActive      Boolean   @default(true)
+
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  bookings      Booking[]
+  reviews       Review[]
+
+  // Vendor can submit multiple arena registration requests
+  arenaRequests Arena[]   @relation("VendorArenaRequests")
+
+  // Vendor owns multiple approved arenas
+  ownedArenas   Arena[]   @relation("VendorOwnedArenas")
+
+  @@map("users")
+}
+
+model Arena {
+  id                String        @id @default(uuid())
+  name              String
+  address           String
+  city              String        @default("Lahore")
+  latitude          Float?
+  longitude         Float?
+  description       String?
+  facilities        String[]
+
+  status            ArenaStatus   @default(PENDING)
+  rejectionReason   String?
+
+  ownerId           String
+  owner             User          @relation("VendorOwnedArenas", fields: [ownerId], references: [id])
+
+  // Back relation for registration requests (optional but required by Prisma)
+  requestedBy       User?         @relation("VendorArenaRequests", fields: [requestedById], references: [id])
+  requestedById     String?
+
+  subArenas         SubArena[]
+  bookings          Booking[]
+  reviews           Review[]
+  images            ArenaImage[]
+
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+
+  @@map("arenas")
+}
+
+model SubArena {
+  id            String    @id @default(uuid())
+  name          String
+  sportType     String
+  pricePerHour  Decimal
+  capacity      Int       @default(1)
+
+  arenaId       String
+  arena         Arena     @relation(fields: [arenaId], references: [id], onDelete: Cascade)
+
+  schedules     Schedule[]
+  bookings      Booking[]
+
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@map("sub_arenas")
+}
+
+model Schedule {
+  id           String   @id @default(uuid())
+  dayOfWeek    Int
+  startTime    String
+  endTime      String
+  isAvailable  Boolean  @default(true)
+
+  subArenaId   String
+  subArena     SubArena @relation(fields: [subArenaId], references: [id], onDelete: Cascade)
+
+  @@map("schedules")
+}
+
+model Booking {
+  id          String        @id @default(uuid())
+  startTime   DateTime
+  endTime     DateTime
+  totalAmount Decimal
+  status      BookingStatus @default(PENDING)
+
+  userId      String
+  user        User          @relation(fields: [userId], references: [id])
+
+  subArenaId  String
+  subArena    SubArena      @relation(fields: [subArenaId], references: [id])
+  arenaId     String
+  arena       Arena         @relation(fields: [arenaId], references: [id])
+
+  payment     Payment?
+
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  @@map("bookings")
+}
+
+model Payment {
+  id            String        @id @default(uuid())
+  amount        Decimal
+  status        PaymentStatus @default(PENDING)
+  transactionId String?
+  gateway       String
+
+  bookingId     String        @unique
+  booking       Booking       @relation(fields: [bookingId], references: [id])
+
+  createdAt     DateTime      @default(now())
+
+  @@map("payments")
+}
+
+model ArenaImage {
+  id        String @id @default(uuid())
+  url       String
+  order     Int    @default(0)
+
+  arenaId   String
+  arena     Arena  @relation(fields: [arenaId], references: [id], onDelete: Cascade)
+
+  @@map("arena_images")
+}
+
+model Review {
+  id        String   @id @default(uuid())
+  rating    Int
+  comment   String?
+  createdAt DateTime @default(now())
+
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+
+  arenaId   String
+  arena     Arena    @relation(fields: [arenaId], references: [id])
+
+  @@map("reviews")
+}
+
+// Enums
+enum Role {
+  SUPERADMIN
+  VENDOR
+  CUSTOMER
+}
+
+enum ArenaStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+  COMPLETED
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+  REFUNDED
+}
