@@ -1,5 +1,9 @@
 @import "tailwindcss";
 
+@theme {
+--color-border-primary: #dadada;
+}
+
 :root {
   --text: #000000;
   --text-h: #08060d;
@@ -53,7 +57,7 @@
 }
 
 #root {
-  width: 1126px;
+  width: full;
   max-width: 100%;
   margin: 0 auto;
   text-align: center;

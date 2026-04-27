@@ -1,5 +1,7 @@
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import routes from "./routes";
+import store from "./redux/store";
+import { Provider } from "react-redux";
 
 function AppContentInner() {
   const router = createBrowserRouter(routes);
@@ -13,7 +15,9 @@ function AppContentInner() {
 function App() {
   return (
     <>
-      <AppContentInner />
+      <Provider store={store}>
+        <AppContentInner />
+      </Provider>
     </>
   );
 }
