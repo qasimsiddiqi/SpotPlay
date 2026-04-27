@@ -15,6 +15,7 @@
     "db:generate": {},
     "db:push": {},
     "db:migrate": {},
+    "db:seed": {},
     "db:studio": {}
   }
 }
