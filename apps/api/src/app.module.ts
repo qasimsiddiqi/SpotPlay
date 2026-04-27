@@ -5,6 +5,8 @@ import { APP_GUARD } from '@nestjs/core';
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
 import { RolesGuard } from './modules/auth/guards/roles.guard';
 import { AuthModule } from './modules/auth/auth.module';
+import { ArenaModule } from './modules/arena/arena.module';
+import { UserModule } from './modules/user/user.module';
 
 @Module({
   imports: [
@@ -16,7 +18,9 @@ import { AuthModule } from './modules/auth/auth.module';
 
     // Modules
     AuthModule,
-    // We'll add BookingModule, PaymentModule, AdminModule later
+    ArenaModule,
+    UserModule,
+    // Add more modules here
   ],
   providers: [
     PrismaService,
@@ -24,10 +28,10 @@ import { AuthModule } from './modules/auth/auth.module';
       provide: APP_GUARD,
       useClass: JwtAuthGuard, // JWT protection for all routes by default
     },
-    {
-      provide: APP_GUARD,
-      useClass: RolesGuard, // Role-based protection
-    },
+    // {
+    //   provide: APP_GUARD,
+    //   useClass: RolesGuard, // Role-based protection
+    // },
   ],
   exports: [PrismaService],
 })
